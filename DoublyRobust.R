@@ -1,0 +1,38 @@
+library(car)
+library(drgee)
+data(SLID)
+head(SLID)
+fit.o1=drgee(oformula=wages~education+age+language,data=SLID,
+             exposure='sex',estimation.method='o')
+summary(fit.o1)
+fit.o2=drgee(oformula=wages~education+age+language,data=SLID,
+             exposure='sex',iaformula=~education,olink='log',
+             estimation.method='o')
+summary(fit.o2)
+fit.e1=drgee(eformula=sex~education+age+language,data=SLID,
+             outcome='wages',iaformula=~education,olink='log',elink='logit',
+             estimation.method='e')
+summary(fit.e1)
+SLID$HighWage=ifelse(SLID$wages>15,1,0)
+fit.e2=drgee(eformula=sex~education+age+language,data=SLID,
+             outcome='HighWage',iaformula=~education,olink='logit',elink='logit',
+             estimation.method='e')
+summary(fit.e2)
+fit.dr1=drgee(oformula=wages~education+age+language,
+              eformula=sex~education+age+language,data=SLID,
+              iaformula=~education,olink='log',elink='logit',
+              estimation.method='dr')
+summary(fit.dr1)
+fit.dr2=drgee(oformula=HighWage~education+age+language,
+              eformula=sex~education+age+language,data=SLID,
+              iaformula=~education,olink='logit',elink='logit',
+              estimation.method='dr')
+summary(fit.dr2)
+
+library(geepack)
+data(ohio)
+head(ohio)
+fit.dr.cluster=drgee(oformula=resp~age,eformula=smoke~age,data=ohio,
+                     olink='logit',elink='logit',clusterid='id',
+                     estimation.method='dr')
+summary(fit.dr.cluster)

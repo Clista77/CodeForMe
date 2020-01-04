@@ -1,0 +1,7 @@
+library(MASS)
+data(cars)
+lm=lm(dist~speed,data=cars)
+rlm=rlm(dist~speed,data=cars)
+plot(dist~speed,data=cars)
+abline(lm)
+abline(rlm)

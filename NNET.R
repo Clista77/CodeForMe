@@ -1,0 +1,8 @@
+library(nnet)
+library(caret)
+library(neuralnet)
+train=train(Species~.,data=iris,method='nnet')
+predict=predict(train,iris)
+nnet=nnet(Species~.,data=iris,size=3,decay=0.1)
+neuralnet=neuralnet(Species~.,data=iris,hidden=3)
+plot(neuralnet)

@@ -1,0 +1,44 @@
+library(tidyverse)
+heart=read.delim('heart.txt')
+max(str_length(heart$code))
+max(str_length(heart$id))
+heart$code=str_pad(heart$code,width=3,pad=0)
+heart$id=str_pad(heart$id,width=10,pad=0)
+heart=heart%>%
+      mutate(id=str_c(code,id))%>%
+      select(-code)
+dim(heart)
+dim(heart%>%group_by(id)%>%filter(n()>1))
+dim(heart%>%filter(str_detect(doctor,'ŠÔˆá')))
+dim(heart%>%group_by(id)%>%filter(n()==1))
+dim(heart%>%filter(str_detect(doctor,'ŠÔˆá',negate=T)))
+heart=heart%>%group_by(id)%>%filter(n()==1)%>%
+              filter(str_detect(doctor,'ŠÔˆá',negate=T))
+head(heart)
+heart$insurance=as.character(heart$insurance)
+heart=heart%>%mutate(insurance=na_if(insurance,''))
+heart=heart%>%mutate(insurance=replace_na(insurance,'•s–¾'))
+heart=heart%>%mutate(insurance=recode(insurance,'ab'='cd',.default=insurance))
+
+theme_set(theme_bw())
+heart%>%mutate(insurance=factor(insurance,levels=c('a','b','c','d')))%>%
+        ggplot(aes(x=insurance))+
+        geom_bar(fill='cornflowerblue',width=0.5)+
+        labs(title='abcd',x=NULL,y=NULL)+
+        theme(plot.title=element_text(color='steelblue',hjust=0.5))+
+        geom_text(stat='count',aes(label=..count..),size=3,vjust=-0.5)+
+        ylim(0,3000)
+
+heart$disease=as.character(heart$disease)
+heart1=heart%>%mutate(disease=na_if(disease,''))%>%drop_na(disease)%>%
+               mutate(disease=recode(disease,'a'='b','c'='d',.default=disease))
+
+theme_set(theme_bw())
+heart1%>%mutate(disease=factor(disease,levels=c('a','b','c','d')))%>%
+        ggplot(aes(x=disease))+
+        geom_bar(fill='darkorange',width=0.5)+
+        labs(title='abcd',x=NULL,y=NULL)+
+        theme(plot.title=element_text(color='darkorange',hjust=0.5))+
+        theme(axis.text.x=element_text(size=7,angle=45,vjust=0.5))+
+        geom_text(stat='count',aes(label=..count..),size=2,vjust=-0.5)+
+        ylim(0,2000)

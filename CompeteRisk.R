@@ -1,0 +1,9 @@
+library(cmprsk)
+library(tidyverse)
+bmt=read.csv("bmt.csv",sep=";")
+head(bmt)
+bmt=bmt%>%mutate(dis=recode(dis,'0'='ALL','1'='AML'),
+                 status=recode(status,'0'='censor','1'='death','2'='relapse'))
+addmargins(xtabs(~dis+status,data=bmt))
+cuminc=cuminc(ftime=bmt$ftime,fstatus=bmt$status,group=bmt$dis)
+plot(cuminc,xlab='Days')

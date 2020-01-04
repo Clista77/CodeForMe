@@ -1,0 +1,11 @@
+library(lme4)
+library(ggplot2)
+data(sleepstudy)
+head(sleepstudy)
+lmer=lmer(Reaction~Days+(Days|Subject),data=sleepstudy)
+summary(lmer)
+fixef(lmer)
+ranef(lmer)
+sleepstudy%>%ggplot(aes(x=Days,y=Reaction,color=Subject))+
+             geom_point()+geom_smooth(method='lm',se=F)+
+             geom_abline(intercept=fixef(lmer)[1],slope=fixef(lmer)[2])
