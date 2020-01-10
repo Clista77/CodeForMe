@@ -31,7 +31,7 @@ library(moonBook)
 mytable(treat~.,lalonde)
 mytable(treat~.,m.data)
 
-#IPW
+#IPW1
 y=lalonde$re78
 x=lalonde$treat
 weight=(x/ps)+(1-x)/(1-ps)
@@ -39,6 +39,14 @@ ipw.lm=lm(y~x,data=lalonde,weights=weight)
 summary(ipw.lm)
 ipw1=sum((y/ps)[x==1])/sum(1/ps[x==1])
 ipw0=sum((y/(1-ps))[x==0])/sum(1/(1-ps)[x==0])
+ipw1-ipw0
+
+#IPW2
+y  <- lalonde$re78
+z  <- lalonde$treat
+ipwe1 <- sum((z*y)/ps)/sum(z/ps)
+ipwe0 <- sum(((1-z)*y)/(1-ps))/sum((1-z)/(1-ps))
+ipw1-ipw0
 
 #IPW Causal Effect
 y=lalonde$re78
@@ -51,20 +59,65 @@ p12=p1+p2
 ipw=lm(y~x12-1,weight=p12)
 summary(ipw)
 
-#DR
-library(tidyverse)
+#DR1
+gfomula = treat~age+educ+black+hisp+married+nodegr+re74+re75+u74+u75
+fomula <- re78~age+educ+black+hisp+married+nodegr+re74+re75+u74+u75
+library(dplyr)
+library(Matching)
+data(lalonde)
+head(lalonde)
+glm=glm(gfomula,
+        data=lalonde,family=binomial)
+ps=predict(glm,type='response')
 lalonde1=lalonde%>%filter(treat==1)
 lalonde0=lalonde%>%filter(treat==0)
 n1  <- nrow(lalonde1)
 n0  <- nrow(lalonde0)
-lm1 <- lm(re78~age+educ+black+hispan+married+nodegree+re74+re75,data=lalonde1)
-lm0 <- lm(re78~age+educ+black+hispan+married+nodegree+re74+re75,data=lalonde0)
+lm1 <- lm(fomula,data=lalonde1)
+lm0 <- lm(fomula,data=lalonde0)
 y1  <- lalonde1$re78
 y0  <- lalonde0$re78
 ps1 <- ps[lalonde$treat==1]
 ps0 <- ps[lalonde$treat==0]
 dr1 <- 1/n1 * sum(y1+((1-ps1)/ps1)*(y1-lm1$fitted))
 dr0 <- 1/n0 * sum(y0/(1-ps0)+(1-1/(1-ps0))*lm0$fitted)
+dr1-dr0
+
+#DR2
+n      <- nrow(lalonde)
+y      <- lalonde$re78
+z      <- lalonde$treat
+data1  <- lalonde %>% filter(treat==1)
+data0  <- lalonde %>% filter(treat==0)
+glm=glm(gfomula,
+        data=lalonde,family=binomial)
+ps=predict(glm,type='response')
+model1 <- lm(fomula,data=data1)
+model0 <- lm(fomula,data=data0)
+fitted1 <- predict(model1, lalonde)
+fitted0 <- predict(model0, lalonde)
+dre1    <- (1/n)*sum(y+((z-ps)/ps)*(y-fitted1))
+dre0    <- (1/n)*sum(((1-z)*y)/(1-ps)+(1-(1-z)/(1-ps))*fitted0)
+dre1-dre0
+
+#DR3
+n1  <- nrow(lalonde1)
+n0  <- nrow(lalonde0)
+z1=1
+z0=0
+y1  <- lalonde1$re78
+y0  <- lalonde0$re78
+ps1 <- ps[lalonde$treat==1]
+ps0 <- ps[lalonde$treat==0]
+dr11 = 1/n1 * sum((z1*y1)/(ps1)+(1-z1/ps1)*lm1$fitted)
+dr00 = 1/n0 * sum((z0*y0)/(ps0)+(1-z0/ps0)*lm0$fitted)
+dr11-dr00
+predict1 <- predict(lm1, lalonde)
+predict0 <- predict(lm0, lalonde)
+#or maybe this?
+or1  <- (1/n)*sum(    (z*y)/  (ps) + (1-  (z)/  (ps))*predict1)
+or0  <- (1/n)*sum(((1-z)*y)/(1-ps) + (1-(1-z)/(1-ps))*predict0)
+or1-or0
 
 library(Epi)
 ROC(form=treat~age+educ+black+hispan+married+nodegree+re74+re75,
@@ -113,7 +166,6 @@ match=Match(Y=Y,Tr=Tr,X=X)
 summary(match)
 MatchBalance(abcix~stent+height+female+diabetic+acutemi+ejecfrac+ves1proc,
              match.out=match,nboots=1000,data=lindner)
-
 
 library(PSAgraphics)
 data(lindner)
